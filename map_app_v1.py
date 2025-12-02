@@ -912,9 +912,9 @@ def generate_folium_map(geography, boundary, metric, month_year, annotations, st
     # Convert to HTML string to show in Streamlit
     # map_html = folium_map._repr_html_()
     # return folium_map, file_name, map_html
-    html_str = folium_map.get_root().render()
-    return folium_map, file_name, html_str
-    # return folium_map, file_name
+    # html_str = folium_map.get_root().render()
+    # return folium_map, file_name, html_str
+    return folium_map, file_name
 
 
 
@@ -1125,22 +1125,22 @@ if generate_clicked:
 
 # --- 2. display the last generated map (no extra processing) ---
 
-# if "map_html" in st.session_state and not generate_clicked:
-#     folium_map, _ = generate_folium_map(
-#     geography=geography,
-#     boundary=boundary,
-#     metric=metric,
-#     month_year=month_year,
-#     annotations=annotations,
-#     state=state,
-#         )
-#     with map_container:
-#         st_folium(folium_map, width=None, height=650)
+if "map_html" in st.session_state and not generate_clicked:
+    folium_map, _ = generate_folium_map(
+    geography=geography,
+    boundary=boundary,
+    metric=metric,
+    month_year=month_year,
+    annotations=annotations,
+    state=state,
+        )
+    with map_container:
+        st_folium(folium_map, width=None, height=650)
 
-# --- 2. display the last generated map (no extra processing) ---
-if "map_html" in st.session_state:
-    st.components.v1.html(
-        st.session_state["map_html"],
-        height=650,
-        width=None,
-    )
+# # --- 2. display the last generated map (no extra processing) ---
+# if "map_html" in st.session_state:
+#     st.components.v1.html(
+#         st.session_state["map_html"],
+#         height=650,
+#         width=None,
+#     )
