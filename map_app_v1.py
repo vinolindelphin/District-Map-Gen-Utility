@@ -99,11 +99,7 @@ for k, v in {
 # # call it
 # render_header_and_button()
 
-# ---- MAP RENDERING (static HTML, no reruns on zoom) ----
-if st.session_state.last_map_html:
-    st_html(st.session_state.last_map_html, height=780, scrolling=False)
-else:
-    st.info("Choose geography, boundary, metric, month and state, then click **Generate Map**.")
+
 
 
 def _load_sa_from_toml_files():
@@ -992,6 +988,12 @@ st.set_page_config(
     layout="wide",
 )
 
+# ---- MAP RENDERING (static HTML, no reruns on zoom) ----
+if st.session_state.last_map_html:
+    st_html(st.session_state.last_map_html, height=780, scrolling=False)
+else:
+    st.info("Choose geography, boundary, metric, month and state, then click **Generate Map**.")
+    
 # ---- sidebar: inputs ----
 with st.sidebar:
     st.header("Configuration")
