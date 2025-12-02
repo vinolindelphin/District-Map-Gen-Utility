@@ -1081,7 +1081,7 @@ if generate_clicked:
     with st.spinner("Generating map… this may take a few seconds"):
         try:
         # IMPORTANT: this uses your existing function & logic
-            folium_map, file_name, map_html = generate_folium_map(
+            folium_map, file_name = generate_folium_map(
                 geography=geography,
                 boundary=boundary,
                 metric=metric,
@@ -1094,7 +1094,7 @@ if generate_clicked:
             map_html = folium_map.get_root().render()
             st.session_state["map_file_bytes"] = map_html.encode("utf-8")
             st.session_state["map_file_name"] = file_name
-            st.session_state["map_html"] = map_html
+            # st.session_state["map_html"] = map_html
         except Exception as e:
             st.error(f"❌ Error while generating map: {e}")
             # Stop this run so spinner finishes and we don’t get half-rendered UI
