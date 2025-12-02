@@ -1103,39 +1103,39 @@ if generate_clicked:
         with map_container:
             st_folium(folium_map, width=None, height=650)
 
-# elif "map_file_bytes" in st.session_state:
-# #     pass
-#     # if user already generated a map earlier in the session, keep showing it
-#     # from folium import Map
-#     # from branca.element import Figure
+elif "map_file_bytes" in st.session_state:
+#     pass
+    # if user already generated a map earlier in the session, keep showing it
+    # from folium import Map
+    # from branca.element import Figure
 
-#     # rebuild folium Map from stored HTML
-#     # easiest is to re-run generate_folium_map if you want "remembered" values,
-#     # but to keep it simple we'll only display after generate until page reload
-#     folium_map, _ = generate_folium_map(
-#         geography=geography,
-#         boundary=boundary,
-#         metric=metric,
-#         month_year=month_year,
-#         annotations=annotations,
-#         state=state,
-#     )
-#     with map_container:
-#         st_folium(folium_map, width=None, height=650)
+    # rebuild folium Map from stored HTML
+    # easiest is to re-run generate_folium_map if you want "remembered" values,
+    # but to keep it simple we'll only display after generate until page reload
+    folium_map, _ = generate_folium_map(
+        geography=geography,
+        boundary=boundary,
+        metric=metric,
+        month_year=month_year,
+        annotations=annotations,
+        state=state,
+    )
+    with map_container:
+        st_folium(folium_map, width=None, height=650)
 
 # --- 2. display the last generated map (no extra processing) ---
 
-if "map_html" in st.session_state and not generate_clicked:
-    folium_map, _ = generate_folium_map(
-    geography=geography,
-    boundary=boundary,
-    metric=metric,
-    month_year=month_year,
-    annotations=annotations,
-    state=state,
-        )
-    with map_container:
-        st_folium(folium_map, width=None, height=650)
+# if "map_html" in st.session_state and not generate_clicked:
+#     folium_map, _ = generate_folium_map(
+#     geography=geography,
+#     boundary=boundary,
+#     metric=metric,
+#     month_year=month_year,
+#     annotations=annotations,
+#     state=state,
+#         )
+#     with map_container:
+#         st_folium(folium_map, width=None, height=650)
 
 # # --- 2. display the last generated map (no extra processing) ---
 # if "map_html" in st.session_state:
