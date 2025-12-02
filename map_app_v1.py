@@ -17,6 +17,11 @@ from branca.element import Template, MacroElement, Html
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
+try:
+    import tomllib  # py311+
+except Exception:
+    import tomli as tomllib  # py310 fallback
+
 
 # -------------------------------------------------------------------
 # Streamlit page config
@@ -41,10 +46,6 @@ st.set_page_config(
 
 # For Python 3.11+, tomllib is built-in. If you are on 3.10 use:  pip install tomli
 
-try:
-    import tomllib  # py311+
-except Exception:
-    import tomli as tomllib  # py310 fallback
 
 def _load_sa_from_toml_files():
     """
