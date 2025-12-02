@@ -501,6 +501,7 @@ def generate_folium_map(geography, boundary, metric, month_year, annotations, st
                        SUM(BBPS_EMI_transacting) AS BBPS_EMI_transacting,
                        SUM(CASA_TRANSACTING) AS CASA_TRANSACTING,
                        SUM(CASA_5PLUS_ACCOUNTS_TRANSACTING) AS CASA_5PLUS_ACCOUNTS_TRANSACTING,
+                       SUM(AEPS_MARKET_SIZE) as AEPS_MARKET_SIZE,
                        -- add any other fields you use...
                        MAX(month) AS MONTH
                 FROM `{table_name}`
