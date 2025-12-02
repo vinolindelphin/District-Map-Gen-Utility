@@ -2,8 +2,29 @@
 
 import os
 from datetime import date, datetime
+from google.oauth2 import service_account 
+
+import os
+from datetime import date, datetime
 
 
+import numpy as np
+import pandas as pd
+import streamlit as st
+import streamlit.components.v1 as components
+
+import geopandas as gpd
+import folium
+from folium.features import GeoJsonTooltip
+from branca.element import Template, MacroElement, Html
+
+from google.cloud import bigquery
+from google.oauth2 import service_account
+
+try:
+    import tomllib  # py311+
+except Exception:
+    import tomli as tomllib  # py310 fallback
 
 
 def _load_sa_from_toml_files():
