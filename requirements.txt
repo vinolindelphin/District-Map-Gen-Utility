@@ -1,4 +1,6 @@
 streamlit
 pandas
 numpy
+geopandas
+folium
 # add anything else you imported
