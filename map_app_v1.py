@@ -39,6 +39,35 @@ st.set_page_config(
 #     client = bigquery.Client(credentials=credentials, project=credentials.project_id)
 #     return client
 
+
+def _load_sa_from_toml_files():
+    """
+    Try to read gcp_service_account from a secrets.toml file on disk:
+      1) %USERPROFILE%\.streamlit\secrets.toml
+      2) <CWD>\.streamlit\secrets.toml
+    Returns (dict_or_None, source_str)
+    """
+    candidates = [
+        os.path.join(os.environ.get("USERPROFILE", ""), ".streamlit", "secrets.toml"),
+        os.path.join(os.getcwd(), ".streamlit", "secrets.toml"),
+    ]
+    for path in candidates:
+        try:
+            if path and os.path.exists(path):
+                with open(path, "rb") as f:
+                    data = tomllib.load(f)
+                sa = data.get("gcp_service_account")
+                if sa:
+                    # If the TOML table is a plain dict (already parsed), just return it
+                    return sa, f"file:{path}"
+        except Exception as e:
+            # show but keep trying others
+            st.sidebar.warning(f"Could not parse secrets at {path}: {e}")
+    return None, None
+
+
+
+
 def get_bq_client():
     """
     Build a BigQuery client, trying sources in this order:
