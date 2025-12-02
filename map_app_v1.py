@@ -991,9 +991,9 @@ st.set_page_config(
 # ---- MAP RENDERING (static HTML, no reruns on zoom) ----
 if st.session_state.last_map_html:
     st_html(st.session_state.last_map_html, height=780, scrolling=False)
-else:
-    st.info("Choose geography, boundary, metric, month and state, then click **Generate Map**.")
-    
+# else:
+#     st.info("Choose geography, boundary, metric, month and state, then click **Generate Map**.")
+
 # ---- sidebar: inputs ----
 with st.sidebar:
     st.header("Configuration")
@@ -1142,7 +1142,7 @@ map_container = st.container()
 
 ############################################################33
 
-generate_clicked = st.button("Generate Map")
+# generate_clicked = st.button("Generate Map")
 
 if generate_clicked:
     with st.spinner("Generating map..."):
