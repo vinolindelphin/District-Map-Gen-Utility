@@ -3,6 +3,7 @@
 import os
 from datetime import date, datetime
 
+
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -30,13 +31,59 @@ st.set_page_config(
 # BigQuery client (cached)
 # -------------------------------------------------------------------
 @st.cache_resource
+# def get_bq_client():
+#     # Use your existing service account JSON path here
+#     credentials = service_account.Credentials.from_service_account_file(
+#         r"C:\Users\vinolin.delphin_spic\Documents\Credentials\vinolin_delphin_spicemoney-dwh_new.json"
+#     )
+#     client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+#     return client
+
 def get_bq_client():
-    # Use your existing service account JSON path here
-    credentials = service_account.Credentials.from_service_account_file(
-        r"C:\Users\vinolin.delphin_spic\Documents\Credentials\vinolin_delphin_spicemoney-dwh_new.json"
+    """
+    Build a BigQuery client, trying sources in this order:
+      A) st.secrets['gcp_service_account']
+      B) secrets.toml on disk (HOME and CWD)
+      C) GOOGLE_APPLICATION_CREDENTIALS
+      D) Local hardcoded path (your laptop only)
+    Returns: (client, source_str)
+    """
+    # A) Streamlit Secrets (Cloud or local .streamlit/secrets.toml recognized by Streamlit)
+    sa_info = None
+    try:
+        sa_info = st.secrets.get("gcp_service_account", None)
+    except Exception:
+        sa_info = None
+
+    if sa_info:
+        if isinstance(sa_info, str):
+            sa_info = json.loads(sa_info)  # if pasted as a raw JSON string
+        creds = service_account.Credentials.from_service_account_info(sa_info)
+        return bigquery.Client(credentials=creds, project=creds.project_id), "secrets:gcp_service_account"
+
+    # B) Directly read secrets.toml from disk (HOME and CWD)
+    sa_info, src = _load_sa_from_toml_files()
+    if sa_info:
+        # keys in TOML table are already parsed as a dict
+        creds = service_account.Credentials.from_service_account_info(sa_info)
+        return bigquery.Client(credentials=creds, project=creds.project_id), src
+
+    # # C) Env var (local dev)
+    # gac = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    # if gac and os.path.exists(gac):
+    #     return bigquery.Client(), f"env:GOOGLE_APPLICATION_CREDENTIALS={gac}"
+
+    # # D) Local fallback (only for your laptop)
+    # LOCAL_SA_PATH = r"C:\Users\vinolin_delphin_spic\Documents\Credentials\vinolin_delphin_spicemoney-dwh_new.json"
+    # if os.path.exists(LOCAL_SA_PATH):
+    #     creds = service_account.Credentials.from_service_account_file(LOCAL_SA_PATH)
+    #     return bigquery.Client(credentials=creds, project=creds.project_id), f"local:{LOCAL_SA_PATH}"
+
+    raise RuntimeError(
+        "No BigQuery credentials found.\n"
+        "Place secrets.toml in HOME or CWD, set GOOGLE_APPLICATION_CREDENTIALS, "
+        "or update LOCAL_SA_PATH."
     )
-    client = bigquery.Client(credentials=credentials, project=credentials.project_id)
-    return client
 
 
 # -------------------------------------------------------------------
