@@ -989,8 +989,8 @@ st.set_page_config(
 )
 
 # ---- MAP RENDERING (static HTML, no reruns on zoom) ----
-if st.session_state.last_map_html:
-    st_html(st.session_state.last_map_html, height=780, scrolling=False)
+# if st.session_state.last_map_html:
+#     st_html(st.session_state.last_map_html, height=780, scrolling=False)
 # else:
 #     st.info("Choose geography, boundary, metric, month and state, then click **Generate Map**.")
 
@@ -1110,22 +1110,52 @@ col1, col2 = st.columns([4, 1])
 with col1:
     st.title("🗺️ Automated District / State Map Generator")
 
-with col2:
-    map_ready = "map_file_bytes" in st.session_state
+# with col2:
+#     map_ready = "map_file_bytes" in st.session_state
 
+#     if map_ready:
+#         clicked_download = st.download_button(
+#             label="⬇️ Download HTML Map",
+#             data=st.session_state["map_file_bytes"],
+#             file_name=st.session_state.get("map_file_name", "map.html"),
+#             mime="text/html",
+#             use_container_width=True,
+#             key="download_html_map",
+#         )
+#         if clicked_download:
+#             st.success("Map download started.")
+#     else:
+#         # show disabled button in same place until a map is generated
+#         st.download_button(
+#             label="⬇️ Download HTML Map",
+#             data=b"",
+#             file_name="map.html",
+#             mime="text/html",
+#             disabled=True,
+#             use_container_width=True,
+#             key="download_html_map_disabled",
+#         )
+
+
+with col2:
+    # Header row: big app title + download button (reuse what you already have)
+    st.title("🌍 Automated District / State Map Generator")
+
+    # Download HTML Map button – enabled only when map exists
+    map_ready = st.session_state.last_map_html != ""
     if map_ready:
-        clicked_download = st.download_button(
+        clicked_dl = st.download_button(
             label="⬇️ Download HTML Map",
-            data=st.session_state["map_file_bytes"],
-            file_name=st.session_state.get("map_file_name", "map.html"),
+            data=st.session_state.map_file_bytes,
+            file_name=st.session_state.map_file_name or "map.html",
             mime="text/html",
             use_container_width=True,
             key="download_html_map",
         )
-        if clicked_download:
+        if clicked_dl:
             st.success("Map download started.")
     else:
-        # show disabled button in same place until a map is generated
+        # Disabled placeholder button in same place
         st.download_button(
             label="⬇️ Download HTML Map",
             data=b"",
@@ -1136,6 +1166,19 @@ with col2:
             key="download_html_map_disabled",
         )
 
+    # Show the per-map title (metric • month • state)
+    if st.session_state.last_map_title:
+        st.markdown(st.session_state.last_map_title)
+
+    # ---------- ACTUAL MAP IFRAME (no reruns, no dulling) ----------
+    if st.session_state.last_map_html:
+        st_html(
+            st.session_state.last_map_html,
+            height=780,          # adjust as you like
+            scrolling=False,     # avoid inner scrollbar
+        )
+    else:
+        st.info("Choose geography, boundary, metric, month and state, then click **Generate Map**.")
 
 # ---- main map area ----
 map_container = st.container()
@@ -1150,25 +1193,39 @@ if generate_clicked:
             geography, boundary, metric, month_year, annotations, state
         )
 
-        # OPTIONAL: build a nice markdown title for the page header
-        # (use whatever labels you already compute)
-        month_label = pd.to_datetime(month_year).strftime("%B %Y")
-        state_label = state if geography == "State" else "All States"
-        title_md = f"### {metric} • {month_label} • {state_label}"
+        # # OPTIONAL: build a nice markdown title for the page header
+        # # (use whatever labels you already compute)
+        # month_label = pd.to_datetime(month_year).strftime("%B %Y")
+        # state_label = state if geography == "State" else "All States"
+        # title_md = f"### {metric} • {month_label} • {state_label}"
 
-        # ---- THIS IS THE IMPORTANT PART (same pattern as your pincode app) ----
-        html_str = m._repr_html_()
+        # # ---- THIS IS THE IMPORTANT PART (same pattern as your pincode app) ----
+        # html_str = m._repr_html_()
 
+        # st.session_state.last_map_title = title_md
+        # st.session_state.last_map_html = html_str
+        # st.session_state.last_map_meta = {
+        #     "metric": metric,
+        #     "month": month_label,
+        #     "state": state_label,
+        #     "boundary": boundary,
+        #     "geography": geography,
+        # }
+        # st.session_state.pending_changes = False
+
+                # ------------- SAVE RESULT IN SESSION (like pincode app) -------------
+        # Nicely formatted title for the page header
+        month_label = pd.to_datetime(month_year).strftime("%B %Y")  # "November 2025"
+        if geography == "State":
+            title_md = f"### {metric} • {month_label} • {state}"
+        else:
+            title_md = f"### {metric} • {month_label} • All States"
+
+        html_str = folium_map._repr_html_()          # <--- IMPORTANT
         st.session_state.last_map_title = title_md
         st.session_state.last_map_html = html_str
-        st.session_state.last_map_meta = {
-            "metric": metric,
-            "month": month_label,
-            "state": state_label,
-            "boundary": boundary,
-            "geography": geography,
-        }
-        st.session_state.pending_changes = False
+        st.session_state.map_file_bytes = html_str.encode("utf-8")
+        st.session_state.map_file_name = file_name
 
 
 
