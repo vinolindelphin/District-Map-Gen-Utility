@@ -39,7 +39,12 @@ st.set_page_config(
 #     client = bigquery.Client(credentials=credentials, project=credentials.project_id)
 #     return client
 
-
+# For Python 3.11+, tomllib is built-in. If you are on 3.10 use:  pip install tomli
+try:
+    import tomllib  # py311+
+except Exception:
+    import tomli as tomllib  # py310 fallback
+    
 def _load_sa_from_toml_files():
     """
     Try to read gcp_service_account from a secrets.toml file on disk:
