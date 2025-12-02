@@ -22,6 +22,11 @@ try:
 except Exception:
     import tomli as tomllib  # py310 fallback
 
+import streamlit.components.v1 as components
+
+# optional alias so it matches your pincode app
+st_html = components.html
+
 
 # -------------------------------------------------------------------
 # Streamlit page config
@@ -31,6 +36,15 @@ st.set_page_config(
     layout="wide",
 )
 
+# ---- session init (near the top of main()) ----
+for k, v in {
+    "last_map_html": None,
+    "last_map_title": None,
+    "last_map_meta": None,
+    "pending_changes": False,
+}.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
 
 # -------------------------------------------------------------------
 # BigQuery client (cached)
@@ -45,6 +59,51 @@ st.set_page_config(
 #     return client
 
 # For Python 3.11+, tomllib is built-in. If you are on 3.10 use:  pip install tomli
+
+
+# ---- HEADER + DOWNLOAD BUTTON ----
+def render_header_and_button():
+    col1, col2 = st.columns([4, 1])
+
+    with col1:
+        # Use the stored markdown title if present, else the static app title
+        if st.session_state.last_map_title:
+            st.markdown(st.session_state.last_map_title)
+        else:
+            st.title("🗺️ Automated District / State Map Generator")
+
+    with col2:
+        # Enable download only if a map was generated
+        if st.session_state.last_map_html:
+            clicked = st.download_button(
+                label="⬇️ Download HTML Map",
+                data=st.session_state.last_map_html.encode("utf-8"),
+                file_name="map.html",
+                mime="text/html",
+                key="download_html_map",
+                use_container_width=True,
+            )
+            if clicked:
+                st.success("Map download started.")
+        else:
+            st.download_button(
+                label="⬇️ Download HTML Map",
+                data=b"",
+                file_name="map.html",
+                mime="text/html",
+                disabled=True,
+                key="download_html_map_disabled",
+                use_container_width=True,
+            )
+
+# call it
+render_header_and_button()
+
+# ---- MAP RENDERING (static HTML, no reruns on zoom) ----
+if st.session_state.last_map_html:
+    st_html(st.session_state.last_map_html, height=780, scrolling=False)
+else:
+    st.info("Choose geography, boundary, metric, month and state, then click **Generate Map**.")
 
 
 def _load_sa_from_toml_files():
@@ -197,6 +256,8 @@ def add_legend(folium_map, metric, color_map):
     legend._template = Template(f"{{% macro html(this, kwargs) %}}{legend_html}{{% endmacro %}}")
     folium_map.get_root().add_child(legend)
     return folium_map
+
+
 
 
 # -------------------------------------------------------------------
@@ -1077,70 +1138,84 @@ with col2:
 # ---- main map area ----
 map_container = st.container()
 
+############################################################33
+
+generate_clicked = st.button("Generate Map")
+
 if generate_clicked:
-    with st.spinner("Generating map… this may take a few seconds"):
-        try:
-        # IMPORTANT: this uses your existing function & logic
-            folium_map, file_name = generate_folium_map(
-                geography=geography,
-                boundary=boundary,
-                metric=metric,
-                month_year=month_year,
-                annotations=annotations,
-                state=state,
-            )
+    with st.spinner("Generating map..."):
+        m, file_name = generate_folium_map(
+            geography, boundary, metric, month_year, annotations, state
+        )
 
-            # render map HTML once and store for download + display
-            map_html = folium_map.get_root().render()
-            st.session_state["map_file_bytes"] = map_html.encode("utf-8")
-            st.session_state["map_file_name"] = file_name
-            # st.session_state["map_html"] = map_html
-        except Exception as e:
-            st.error(f"❌ Error while generating map: {e}")
-            # Stop this run so spinner finishes and we don’t get half-rendered UI
-            st.stop()
+        # OPTIONAL: build a nice markdown title for the page header
+        # (use whatever labels you already compute)
+        month_label = pd.to_datetime(month_year).strftime("%B %Y")
+        state_label = state if geography == "State" else "All States"
+        title_md = f"### {metric} • {month_label} • {state_label}"
 
-        with map_container:
-            st_folium(folium_map, width=None, height=650)
+        # ---- THIS IS THE IMPORTANT PART (same pattern as your pincode app) ----
+        html_str = m._repr_html_()
 
-elif "map_file_bytes" in st.session_state:
-#     pass
-    # if user already generated a map earlier in the session, keep showing it
-    # from folium import Map
-    # from branca.element import Figure
+        st.session_state.last_map_title = title_md
+        st.session_state.last_map_html = html_str
+        st.session_state.last_map_meta = {
+            "metric": metric,
+            "month": month_label,
+            "state": state_label,
+            "boundary": boundary,
+            "geography": geography,
+        }
+        st.session_state.pending_changes = False
 
-    # rebuild folium Map from stored HTML
-    # easiest is to re-run generate_folium_map if you want "remembered" values,
-    # but to keep it simple we'll only display after generate until page reload
-    folium_map, _ = generate_folium_map(
-        geography=geography,
-        boundary=boundary,
-        metric=metric,
-        month_year=month_year,
-        annotations=annotations,
-        state=state,
-    )
-    with map_container:
-        st_folium(folium_map, width=None, height=650)
 
-# --- 2. display the last generated map (no extra processing) ---
 
-# if "map_html" in st.session_state and not generate_clicked:
+
+
+#####################################################
+# if generate_clicked:
+#     with st.spinner("Generating map… this may take a few seconds"):
+#         try:
+#         # IMPORTANT: this uses your existing function & logic
+#             folium_map, file_name = generate_folium_map(
+#                 geography=geography,
+#                 boundary=boundary,
+#                 metric=metric,
+#                 month_year=month_year,
+#                 annotations=annotations,
+#                 state=state,
+#             )
+
+#             # render map HTML once and store for download + display
+#             map_html = folium_map.get_root().render()
+#             st.session_state["map_file_bytes"] = map_html.encode("utf-8")
+#             st.session_state["map_file_name"] = file_name
+#             # st.session_state["map_html"] = map_html
+#         except Exception as e:
+#             st.error(f"❌ Error while generating map: {e}")
+#             # Stop this run so spinner finishes and we don’t get half-rendered UI
+#             st.stop()
+
+#         with map_container:
+#             st_folium(folium_map, width=None, height=650)
+
+# elif "map_file_bytes" in st.session_state:
+# #     pass
+#     # if user already generated a map earlier in the session, keep showing it
+#     # from folium import Map
+#     # from branca.element import Figure
+
+#     # rebuild folium Map from stored HTML
+#     # easiest is to re-run generate_folium_map if you want "remembered" values,
+#     # but to keep it simple we'll only display after generate until page reload
 #     folium_map, _ = generate_folium_map(
-#     geography=geography,
-#     boundary=boundary,
-#     metric=metric,
-#     month_year=month_year,
-#     annotations=annotations,
-#     state=state,
-#         )
+#         geography=geography,
+#         boundary=boundary,
+#         metric=metric,
+#         month_year=month_year,
+#         annotations=annotations,
+#         state=state,
+#     )
 #     with map_container:
 #         st_folium(folium_map, width=None, height=650)
 
-# # --- 2. display the last generated map (no extra processing) ---
-# if "map_html" in st.session_state:
-#     st.components.v1.html(
-#         st.session_state["map_html"],
-#         height=650,
-#         width=None,
-#     )
