@@ -61,43 +61,43 @@ for k, v in {
 # For Python 3.11+, tomllib is built-in. If you are on 3.10 use:  pip install tomli
 
 
-# ---- HEADER + DOWNLOAD BUTTON ----
-def render_header_and_button():
-    col1, col2 = st.columns([4, 1])
+# # ---- HEADER + DOWNLOAD BUTTON ----
+# def render_header_and_button():
+#     col1, col2 = st.columns([4, 1])
 
-    with col1:
-        # Use the stored markdown title if present, else the static app title
-        if st.session_state.last_map_title:
-            st.markdown(st.session_state.last_map_title)
-        else:
-            st.title("🗺️ Automated District / State Map Generator")
+#     with col1:
+#         # Use the stored markdown title if present, else the static app title
+#         if st.session_state.last_map_title:
+#             st.markdown(st.session_state.last_map_title)
+#         else:
+#             st.title("🗺️ Automated District / State Map Generator")
 
-    with col2:
-        # Enable download only if a map was generated
-        if st.session_state.last_map_html:
-            clicked = st.download_button(
-                label="⬇️ Download HTML Map",
-                data=st.session_state.last_map_html.encode("utf-8"),
-                file_name="map.html",
-                mime="text/html",
-                key="download_html_map",
-                use_container_width=True,
-            )
-            if clicked:
-                st.success("Map download started.")
-        else:
-            st.download_button(
-                label="⬇️ Download HTML Map",
-                data=b"",
-                file_name="map.html",
-                mime="text/html",
-                disabled=True,
-                key="download_html_map_disabled",
-                use_container_width=True,
-            )
+#     with col2:
+#         # Enable download only if a map was generated
+#         if st.session_state.last_map_html:
+#             clicked = st.download_button(
+#                 label="⬇️ Download HTML Map",
+#                 data=st.session_state.last_map_html.encode("utf-8"),
+#                 file_name="map.html",
+#                 mime="text/html",
+#                 key="download_html_map",
+#                 use_container_width=True,
+#             )
+#             if clicked:
+#                 st.success("Map download started.")
+#         else:
+#             st.download_button(
+#                 label="⬇️ Download HTML Map",
+#                 data=b"",
+#                 file_name="map.html",
+#                 mime="text/html",
+#                 disabled=True,
+#                 key="download_html_map_disabled",
+#                 use_container_width=True,
+#             )
 
-# call it
-render_header_and_button()
+# # call it
+# render_header_and_button()
 
 # ---- MAP RENDERING (static HTML, no reruns on zoom) ----
 if st.session_state.last_map_html:
