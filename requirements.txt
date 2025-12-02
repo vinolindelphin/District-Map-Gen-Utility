@@ -1,6 +1,10 @@
 streamlit
-pandas
-numpy
-geopandas
+pandas>=2.0
 folium
+streamlit-folium
+geopandas
+shapely
+google-cloud-bigquery>=3.10.0
+db-dtypes>=1.2.0
+pyarrow>=10.0.0   
 # add anything else you imported
