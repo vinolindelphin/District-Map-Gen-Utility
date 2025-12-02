@@ -46,6 +46,20 @@ for k, v in {
     if k not in st.session_state:
         st.session_state[k] = v
 
+# --- Session state initialisation (do this once, near the top) ---
+if "last_map_html" not in st.session_state:
+    st.session_state.last_map_html = ""
+
+if "last_map_title" not in st.session_state:
+    st.session_state.last_map_title = ""
+
+if "map_file_bytes" not in st.session_state:
+    st.session_state.map_file_bytes = None
+
+if "map_file_name" not in st.session_state:
+    st.session_state.map_file_name = None
+
+
 # -------------------------------------------------------------------
 # BigQuery client (cached)
 # -------------------------------------------------------------------
@@ -1142,12 +1156,38 @@ with col2:
     st.title("🌍 Automated District / State Map Generator")
 
     # Download HTML Map button – enabled only when map exists
-    map_ready = st.session_state.last_map_html != ""
+    # map_ready = st.session_state.last_map_html != ""
+    # if map_ready:
+    #     clicked_dl = st.download_button(
+    #         label="⬇️ Download HTML Map",
+    #         data=st.session_state.map_file_bytes,
+    #         file_name=st.session_state.map_file_name or "map.html",
+    #         mime="text/html",
+    #         use_container_width=True,
+    #         key="download_html_map",
+    #     )
+    #     if clicked_dl:
+    #         st.success("Map download started.")
+    # else:
+    #     # Disabled placeholder button in same place
+    #     st.download_button(
+    #         label="⬇️ Download HTML Map",
+    #         data=b"",
+    #         file_name="map.html",
+    #         mime="text/html",
+    #         disabled=True,
+    #         use_container_width=True,
+    #         key="download_html_map_disabled",
+    #     )
+
+    # Map is ready if we have some HTML stored
+    map_ready = bool(st.session_state.get("last_map_html"))
+
     if map_ready:
         clicked_dl = st.download_button(
             label="⬇️ Download HTML Map",
-            data=st.session_state.map_file_bytes,
-            file_name=st.session_state.map_file_name or "map.html",
+            data=st.session_state.get("map_file_bytes"),  # safe
+            file_name=st.session_state.get("map_file_name") or "map.html",
             mime="text/html",
             use_container_width=True,
             key="download_html_map",
@@ -1155,10 +1195,10 @@ with col2:
         if clicked_dl:
             st.success("Map download started.")
     else:
-        # Disabled placeholder button in same place
+        # Disabled placeholder in the same spot
         st.download_button(
             label="⬇️ Download HTML Map",
-            data=b"",
+            data=b"",                 # dummy
             file_name="map.html",
             mime="text/html",
             disabled=True,
@@ -1215,13 +1255,14 @@ if generate_clicked:
 
                 # ------------- SAVE RESULT IN SESSION (like pincode app) -------------
         # Nicely formatted title for the page header
-        month_label = pd.to_datetime(month_year).strftime("%B %Y")  # "November 2025"
+        month_label = pd.to_datetime(month_year).strftime("%B %Y")
         if geography == "State":
             title_md = f"### {metric} • {month_label} • {state}"
         else:
             title_md = f"### {metric} • {month_label} • All States"
 
-        html_str = folium_map._repr_html_()          # <--- IMPORTANT
+        html_str = folium_map._repr_html_()
+
         st.session_state.last_map_title = title_md
         st.session_state.last_map_html = html_str
         st.session_state.map_file_bytes = html_str.encode("utf-8")
