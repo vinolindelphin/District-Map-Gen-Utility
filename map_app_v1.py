@@ -26,6 +26,19 @@ try:
 except Exception:
     import tomli as tomllib  # py310 fallback
 
+# ------------------------------------------------------------------
+# Session-state initialisation
+# ------------------------------------------------------------------
+if "map_file_bytes" not in st.session_state:
+    st.session_state.map_file_bytes = None
+
+if "map_file_name" not in st.session_state:
+    st.session_state.map_file_name = None
+
+if "last_map_html" not in st.session_state:
+    st.session_state.last_map_html = None
+
+
 
 def _load_sa_from_toml_files():
     """
@@ -1080,7 +1093,7 @@ def main():
                 st.session_state.last_map_html = map_html
                 st.session_state.last_map_file_name = file_name or \
                     f"MAP_{geography}_{boundary}_{metric}_{month_value}.html"
-                st.session_state.map_file_bytes = full_html
+                st.session_state.map_file_bytes = map_html.encode("utf-8")
                 st.session_state.pending_changes = False
 
             except Exception as e:
