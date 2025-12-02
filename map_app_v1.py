@@ -4,116 +4,6 @@ import os
 from datetime import date, datetime
 
 
-import numpy as np
-import pandas as pd
-import streamlit as st
-import streamlit.components.v1 as components
-
-import geopandas as gpd
-import folium
-from folium.features import GeoJsonTooltip
-from branca.element import Template, MacroElement, Html
-
-from google.cloud import bigquery
-from google.oauth2 import service_account
-
-try:
-    import tomllib  # py311+
-except Exception:
-    import tomli as tomllib  # py310 fallback
-
-import streamlit.components.v1 as components
-
-# optional alias so it matches your pincode app
-st_html = components.html
-
-
-# -------------------------------------------------------------------
-# Streamlit page config
-# -------------------------------------------------------------------
-st.set_page_config(
-    page_title="Automated District / State Map Generator",
-    layout="wide",
-)
-
-# ---- session init (near the top of main()) ----
-for k, v in {
-    "last_map_html": None,
-    "last_map_title": None,
-    "last_map_meta": None,
-    "pending_changes": False,
-}.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
-
-# --- Session state initialisation (do this once, near the top) ---
-if "last_map_html" not in st.session_state:
-    st.session_state.last_map_html = ""
-
-if "last_map_title" not in st.session_state:
-    st.session_state.last_map_title = ""
-
-if "map_file_bytes" not in st.session_state:
-    st.session_state.map_file_bytes = None
-
-if "map_file_name" not in st.session_state:
-    st.session_state.map_file_name = None
-
-
-# -------------------------------------------------------------------
-# BigQuery client (cached)
-# -------------------------------------------------------------------
-@st.cache_resource
-# def get_bq_client():
-#     # Use your existing service account JSON path here
-#     credentials = service_account.Credentials.from_service_account_file(
-#         r"C:\Users\vinolin.delphin_spic\Documents\Credentials\vinolin_delphin_spicemoney-dwh_new.json"
-#     )
-#     client = bigquery.Client(credentials=credentials, project=credentials.project_id)
-#     return client
-
-# For Python 3.11+, tomllib is built-in. If you are on 3.10 use:  pip install tomli
-
-
-# # ---- HEADER + DOWNLOAD BUTTON ----
-# def render_header_and_button():
-#     col1, col2 = st.columns([4, 1])
-
-#     with col1:
-#         # Use the stored markdown title if present, else the static app title
-#         if st.session_state.last_map_title:
-#             st.markdown(st.session_state.last_map_title)
-#         else:
-#             st.title("🗺️ Automated District / State Map Generator")
-
-#     with col2:
-#         # Enable download only if a map was generated
-#         if st.session_state.last_map_html:
-#             clicked = st.download_button(
-#                 label="⬇️ Download HTML Map",
-#                 data=st.session_state.last_map_html.encode("utf-8"),
-#                 file_name="map.html",
-#                 mime="text/html",
-#                 key="download_html_map",
-#                 use_container_width=True,
-#             )
-#             if clicked:
-#                 st.success("Map download started.")
-#         else:
-#             st.download_button(
-#                 label="⬇️ Download HTML Map",
-#                 data=b"",
-#                 file_name="map.html",
-#                 mime="text/html",
-#                 disabled=True,
-#                 key="download_html_map_disabled",
-#                 use_container_width=True,
-#             )
-
-# # call it
-# render_header_and_button()
-
-
 
 
 def _load_sa_from_toml_files():
@@ -174,17 +64,6 @@ def get_bq_client():
         creds = service_account.Credentials.from_service_account_info(sa_info)
         # return bigquery.Client(credentials=creds, project=creds.project_id), src
         return bigquery.Client(credentials=creds, project=creds.project_id)
-
-    # # C) Env var (local dev)
-    # gac = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-    # if gac and os.path.exists(gac):
-    #     return bigquery.Client(), f"env:GOOGLE_APPLICATION_CREDENTIALS={gac}"
-
-    # # D) Local fallback (only for your laptop)
-    # LOCAL_SA_PATH = r"C:\Users\vinolin_delphin_spic\Documents\Credentials\vinolin_delphin_spicemoney-dwh_new.json"
-    # if os.path.exists(LOCAL_SA_PATH):
-    #     creds = service_account.Credentials.from_service_account_file(LOCAL_SA_PATH)
-    #     return bigquery.Client(credentials=creds, project=creds.project_id), f"local:{LOCAL_SA_PATH}"
 
     raise RuntimeError(
         "No BigQuery credentials found.\n"
@@ -906,48 +785,6 @@ def generate_folium_map(geography, boundary, metric, month_year, annotations, st
         ),
     ).add_to(folium_map)
 
-    # center = [merged_gdf.geometry.centroid.y.mean(), merged_gdf.geometry.centroid.x.mean()]
-    # folium_map = folium.Map(location=center, zoom_start=6, tiles="cartodb positron")
-
-    # def style_function(feature):
-    #     bucket = feature["properties"].get("Buckets", "gray")
-    #     return {
-    #         "fillColor": color_map.get(bucket, "gray"),
-    #         "color": "black",
-    #         "weight": 1,
-    #         "fillOpacity": 1,
-    #     }
-
-    # if boundary == "state_level":
-    #     folium.GeoJson(
-    #         merged_gdf,
-    #         name=metric,
-    #         style_function=style_function,
-    #         tooltip=GeoJsonTooltip(
-    #             fields=["STATE_NAME", metric, "Buckets"],
-    #             aliases=["State:", metric, "Category:"],
-    #             localize=True,
-    #             sticky=False,
-    #             labels=True,
-    #             style="background-color: white; color: black; font-weight: bold;",
-    #         ),
-    #     ).add_to(folium_map)
-    # else:
-    #     folium.GeoJson(
-    #         merged_gdf,
-    #         name=metric,
-    #         style_function=style_function,
-    #         tooltip=GeoJsonTooltip(
-    #             fields=["DISTRICT_NAME", metric, "Buckets"],
-    #             aliases=["District:", metric, "Category:"],
-    #             localize=True,
-    #             sticky=False,
-    #             labels=True,
-    #             style="background-color: white; color: black; font-weight: bold;",
-    #         ),
-    #     ).add_to(folium_map)
-
-    # File name for download (but we do NOT save automatically)
     if geography == "State":
         file_name = f"MAP_State_{state}_{boundary}_{metric}_{month_year}.html"
     else:
@@ -989,333 +826,260 @@ def generate_folium_map(geography, boundary, metric, month_year, annotations, st
 
 
 
+######################################################################################
 
-# ===========================
-# STREAMLIT APP (UI + DOWNLOAD)
-# ===========================
+import datetime
+from io import BytesIO
+
 import streamlit as st
-from streamlit_folium import st_folium
+from streamlit.components.v1 import html as st_html
 
-# ---- page config ----
-st.set_page_config(
-    page_title="Automated District / State Map Generator",
-    layout="wide",
-)
+# 🔗 This is your existing file with all the SQL, bins, colours, etc.
+# It MUST define: generate_folium_map(geography, boundary, metric, month_year, annotations, state)
+# from map_app_v1 import generate_folium_map
 
-# ---- MAP RENDERING (static HTML, no reruns on zoom) ----
-# if st.session_state.last_map_html:
-#     st_html(st.session_state.last_map_html, height=780, scrolling=False)
-# else:
-#     st.info("Choose geography, boundary, metric, month and state, then click **Generate Map**.")
 
-# ---- sidebar: inputs ----
-with st.sidebar:
-    st.header("Configuration")
+# -----------------------------------------------------------------------------
+# Session-state helpers
+# -----------------------------------------------------------------------------
 
-    geography = st.selectbox(
-        "Select Geography",
-        ["State", "National"],
-        index=0,
-        key="geography",
+def _init_session_state():
+    """Ensure all keys exist so we never get KeyError."""
+    defaults = {
+        "last_map_html": None,          # Folium map _repr_html_()
+        "last_map_file_name": None,     # Suggested HTML file name
+        "map_file_bytes": None,         # Bytes for download_button
+        "pending_changes": False,       # True when sidebar selections changed
+    }
+    for k, v in defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
+
+
+# -----------------------------------------------------------------------------
+# Month options (friendly label -> YYYY-MM-01 string for your SQL)
+# -----------------------------------------------------------------------------
+
+def build_month_options(start_year=2024, start_month=4):
+    """
+    Builds a dict mapping 'October 2025' -> '2025-10-01'.
+    Adjust start_year/start_month if needed.
+    """
+    today = datetime.date.today()
+    current_year = today.year
+    current_month = today.month
+
+    # up to "previous month" (like your notebook)
+    end_year = current_year
+    end_month = current_month - 1 if current_month > 1 else 12
+    if current_month == 1:
+        end_year -= 1
+
+    options = {}
+    y, m = start_year, start_month
+    while (y < end_year) or (y == end_year and m <= end_month):
+        first_day = datetime.date(y, m, 1)
+        label = first_day.strftime("%B %Y")          # e.g. "October 2025"
+        value = first_day.strftime("%Y-%m-%d")       # e.g. "2025-10-01"
+        options[label] = value
+
+        # increment month
+        if m == 12:
+            m = 1
+            y += 1
+        else:
+            m += 1
+
+    return options
+
+
+# -----------------------------------------------------------------------------
+# Main app
+# -----------------------------------------------------------------------------
+
+def main():
+    _init_session_state()
+
+    st.set_page_config(
+        page_title="Automated District / State Map Generator",
+        layout="wide",
     )
 
-    boundary = st.selectbox(
-        "Select Boundary",
-        ["district_level", "state_level"],
-        index=0,
-        key="boundary",
-    )
+    # ----------------- Sidebar configuration -----------------
+    with st.sidebar:
+        st.header("Configuration")
 
-    metric = st.selectbox(
-        "Select Metric",
-        [
+        geography = st.selectbox(
+            "Select Geography",
+            ["State", "National"],
+            index=0,
+            key="geography",
+        )
+
+        boundary = st.selectbox(
+            "Select Boundary",
+            ["district_level", "state_level"],
+            index=0,
+            key="boundary",
+        )
+
+        metric_options = [
             "TRANSACTING_SMAs",
             "SM_AEPS_MARKET_SHARE",
+            "CHANGE_IN_AEPS_MARKET_SHARE",
             "GROSS_ADDS",
             "NET_ADDS",
-            "SP_WINBACK",
             "SP_NEW_ACTIVATIONS_non_CMS",
             "SP_USAGE_CHURN_non_CMS",
             "SPs",
             "BL_DL_COUNT",
             "ACTIVE_PARTNERS",
-            "ENGAGED_PARTNERS",
             "DISTRIBUTOR_COMMISSION",
             "AVG_DISTR_COMMISSION",
-            "CHANGE_IN_AEPS_MARKET_SHARE",
-            # add any other metrics you already have
-        ],
-        key="metric",
-    )
+        ]
+        metric = st.selectbox(
+            "Select Metric",
+            metric_options,
+            key="metric",
+        )
 
-    # Month selection – user sees "October 2025", backend gets "2025-10-01"
-    from datetime import datetime
+        # month label -> 'YYYY-MM-01'
+        month_map = build_month_options()
+        month_label = st.selectbox(
+            "Select Month–Year",
+            list(month_map.keys()),
+            index=len(month_map) - 1,  # latest
+            key="month_label",
+        )
+        month_value = month_map[month_label]
 
-    def _month_label_to_value(label: str) -> str:
-        # 'October 2025' -> '2025-10-01'
-        dt = datetime.strptime(label, "%B %Y")
-        return dt.strftime("%Y-%m-01")
+        annotations = st.selectbox(
+            "Need Annotations?",
+            ["YES", "NO"],
+            index=0,
+            key="annotations",
+        )
 
-    # build month list from April 2024 to last available month (like you had)
-    start_year, start_month = 2024, 4
-    today = datetime.today()
-    end_year, end_month = today.year, today.month - 1 if today.month > 1 else 12
-    if today.month == 1:
-        end_year -= 1
-
-    month_labels = []
-    y, m = start_year, start_month
-    while (y < end_year) or (y == end_year and m <= end_month):
-        month_labels.append(datetime(y, m, 1).strftime("%B %Y"))  # e.g. "October 2025"
-        if m == 12:
-            y += 1
-            m = 1
-        else:
-            m += 1
-
-    selected_month_label = st.selectbox(
-        "Select Month–Year",
-        month_labels,
-        index=len(month_labels) - 1,
-        key="month_year_label",
-    )
-    # this is the exact string your queries expect (YYYY-MM-01)
-    month_year = _month_label_to_value(selected_month_label)
-
-    annotations = st.selectbox(
-        "Need Annotations?",
-        ["YES", "NO"],
-        index=0,
-        key="annotations",
-    )
-
-    # state dropdown only when geography == "State"
-    state = None
-    if geography == "State":
+        state_list = [
+            "TAMIL NADU",
+            "UTTAR PRADESH",
+            "WEST BENGAL",
+            "MADHYA PRADESH",
+            "MAHARASHTRA",
+            "KARNATAKA",
+            "ODISHA",
+            "CHHATTISGARH",
+            "JHARKHAND",
+            "PUNJAB",
+            "DELHI_NCR",
+            "HARYANA",
+        ]
         state = st.selectbox(
             "Select State",
-            [
-                "TAMIL NADU",
-                "UTTAR PRADESH",
-                "BIHAR",
-                "WEST BENGAL",
-                "MADHYA PRADESH",
-                "MAHARASHTRA",
-                "KARNATAKA",
-                "ODISHA",
-                "CHHATTISGARH",
-                "JHARKHAND",
-                "PUNJAB",
-                "DELHI_NCR",
-                "HARYANA",
-                # add any other states you included in Tkinter
-            ],
+            state_list,
+            index=0,
             key="state",
         )
-    else:
-        state = "N/A"
 
-    generate_clicked = st.button("Generate Map", type="primary")
+        # Mark that sidebar values changed (for future if you want to auto-update)
+        st.session_state.pending_changes = True
 
-
-# ---- header (title + download button) ----
-col1, col2 = st.columns([4, 1])
-
-with col1:
-    st.title("🗺️ Automated District / State Map Generator")
-
-# with col2:
-#     map_ready = "map_file_bytes" in st.session_state
-
-#     if map_ready:
-#         clicked_download = st.download_button(
-#             label="⬇️ Download HTML Map",
-#             data=st.session_state["map_file_bytes"],
-#             file_name=st.session_state.get("map_file_name", "map.html"),
-#             mime="text/html",
-#             use_container_width=True,
-#             key="download_html_map",
-#         )
-#         if clicked_download:
-#             st.success("Map download started.")
-#     else:
-#         # show disabled button in same place until a map is generated
-#         st.download_button(
-#             label="⬇️ Download HTML Map",
-#             data=b"",
-#             file_name="map.html",
-#             mime="text/html",
-#             disabled=True,
-#             use_container_width=True,
-#             key="download_html_map_disabled",
-#         )
-
-
-with col2:
-    # Header row: big app title + download button (reuse what you already have)
-    st.title("🌍 Automated District / State Map Generator")
-
-    # Download HTML Map button – enabled only when map exists
-    # map_ready = st.session_state.last_map_html != ""
-    # if map_ready:
-    #     clicked_dl = st.download_button(
-    #         label="⬇️ Download HTML Map",
-    #         data=st.session_state.map_file_bytes,
-    #         file_name=st.session_state.map_file_name or "map.html",
-    #         mime="text/html",
-    #         use_container_width=True,
-    #         key="download_html_map",
-    #     )
-    #     if clicked_dl:
-    #         st.success("Map download started.")
-    # else:
-    #     # Disabled placeholder button in same place
-    #     st.download_button(
-    #         label="⬇️ Download HTML Map",
-    #         data=b"",
-    #         file_name="map.html",
-    #         mime="text/html",
-    #         disabled=True,
-    #         use_container_width=True,
-    #         key="download_html_map_disabled",
-    #     )
-
-    # Map is ready if we have some HTML stored
-    map_ready = bool(st.session_state.get("last_map_html"))
-
-    if map_ready:
-        clicked_dl = st.download_button(
-            label="⬇️ Download HTML Map",
-            data=st.session_state.get("map_file_bytes"),  # safe
-            file_name=st.session_state.get("map_file_name") or "map.html",
-            mime="text/html",
+        generate_clicked = st.button(
+            "Generate Map",
+            type="primary",
             use_container_width=True,
-            key="download_html_map",
-        )
-        if clicked_dl:
-            st.success("Map download started.")
-    else:
-        # Disabled placeholder in the same spot
-        st.download_button(
-            label="⬇️ Download HTML Map",
-            data=b"",                 # dummy
-            file_name="map.html",
-            mime="text/html",
-            disabled=True,
-            use_container_width=True,
-            key="download_html_map_disabled",
         )
 
-    # Show the per-map title (metric • month • state)
-    if st.session_state.last_map_title:
-        st.markdown(st.session_state.last_map_title)
+    # ----------------- Header row (title + download button) -----------------
+    col1, col2 = st.columns([4, 1])
 
-    # ---------- ACTUAL MAP IFRAME (no reruns, no dulling) ----------
+    with col1:
+        st.title("🗺️ Automated District / State Map Generator")
+
+    with col2:
+        map_ready = st.session_state.map_file_bytes is not None
+
+        if map_ready:
+            # Enabled download button
+            clicked_dl = st.download_button(
+                label="⬇️ Download HTML Map",
+                data=st.session_state.map_file_bytes,
+                file_name=st.session_state.last_map_file_name or "map.html",
+                mime="text/html",
+                use_container_width=True,
+                key="download_html_map",
+            )
+            if clicked_dl:
+                st.success("Map download started.")
+        else:
+            # Disabled placeholder button so layout doesn't jump
+            st.download_button(
+                label="⬇️ Download HTML Map",
+                data=b"",
+                file_name="map.html",
+                mime="text/html",
+                disabled=True,
+                use_container_width=True,
+                key="download_html_map_disabled",
+            )
+
+    # ----------------- Generate map on button click -----------------
+    if generate_clicked:
+        # Only run heavy logic when button is clicked
+        with st.spinner("Generating map…"):
+            try:
+                # 🔑 Your original function from map_app_v1.py
+                folium_map, file_name = generate_folium_map(
+                    geography=geography,
+                    boundary=boundary,
+                    metric=metric,
+                    month_year=month_value,   # this is "YYYY-MM-01"
+                    annotations=annotations,
+                    state=state,
+                )
+
+                # Convert folium map to HTML
+                map_html = folium_map._repr_html_()
+
+                # Optional: wrap in basic HTML shell for download
+                full_html = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>{metric} – {state if geography == "State" else geography} ({month_label})</title>
+                </head>
+                <body>
+                {map_html}
+                </body>
+                </html>
+                """.encode("utf-8")
+
+                # Store in session
+                st.session_state.last_map_html = map_html
+                st.session_state.last_map_file_name = file_name or \
+                    f"MAP_{geography}_{boundary}_{metric}_{month_value}.html"
+                st.session_state.map_file_bytes = full_html
+                st.session_state.pending_changes = False
+
+            except Exception as e:
+                st.session_state.last_map_html = None
+                st.session_state.map_file_bytes = None
+                st.error(f"❌ Error while generating map: {e}")
+
+    # ----------------- Show map (or instructions) -----------------
     if st.session_state.last_map_html:
-        st_html(
-            st.session_state.last_map_html,
-            height=780,          # adjust as you like
-            scrolling=False,     # avoid inner scrollbar
-        )
+        # IMPORTANT: this only re-renders saved HTML; no new BigQuery calls.
+        st_html(st.session_state.last_map_html, height=700, scrolling=False)
     else:
         st.info("Choose geography, boundary, metric, month and state, then click **Generate Map**.")
 
-# ---- main map area ----
-map_container = st.container()
 
-############################################################33
+# -----------------------------------------------------------------------------
+# Entrypoint
+# -----------------------------------------------------------------------------
 
-# generate_clicked = st.button("Generate Map")
+if __name__ == "__main__":
+    main()
 
-if generate_clicked:
-    with st.spinner("Generating map..."):
-        m, file_name = generate_folium_map(
-            geography, boundary, metric, month_year, annotations, state
-        )
-
-        # # OPTIONAL: build a nice markdown title for the page header
-        # # (use whatever labels you already compute)
-        # month_label = pd.to_datetime(month_year).strftime("%B %Y")
-        # state_label = state if geography == "State" else "All States"
-        # title_md = f"### {metric} • {month_label} • {state_label}"
-
-        # # ---- THIS IS THE IMPORTANT PART (same pattern as your pincode app) ----
-        # html_str = m._repr_html_()
-
-        # st.session_state.last_map_title = title_md
-        # st.session_state.last_map_html = html_str
-        # st.session_state.last_map_meta = {
-        #     "metric": metric,
-        #     "month": month_label,
-        #     "state": state_label,
-        #     "boundary": boundary,
-        #     "geography": geography,
-        # }
-        # st.session_state.pending_changes = False
-
-                # ------------- SAVE RESULT IN SESSION (like pincode app) -------------
-        # Nicely formatted title for the page header
-        month_label = pd.to_datetime(month_year).strftime("%B %Y")
-        if geography == "State":
-            title_md = f"### {metric} • {month_label} • {state}"
-        else:
-            title_md = f"### {metric} • {month_label} • All States"
-
-        html_str = folium_map._repr_html_()
-
-        st.session_state.last_map_title = title_md
-        st.session_state.last_map_html = html_str
-        st.session_state.map_file_bytes = html_str.encode("utf-8")
-        st.session_state.map_file_name = file_name
-
-
-
-
-
-#####################################################
-# if generate_clicked:
-#     with st.spinner("Generating map… this may take a few seconds"):
-#         try:
-#         # IMPORTANT: this uses your existing function & logic
-#             folium_map, file_name = generate_folium_map(
-#                 geography=geography,
-#                 boundary=boundary,
-#                 metric=metric,
-#                 month_year=month_year,
-#                 annotations=annotations,
-#                 state=state,
-#             )
-
-#             # render map HTML once and store for download + display
-#             map_html = folium_map.get_root().render()
-#             st.session_state["map_file_bytes"] = map_html.encode("utf-8")
-#             st.session_state["map_file_name"] = file_name
-#             # st.session_state["map_html"] = map_html
-#         except Exception as e:
-#             st.error(f"❌ Error while generating map: {e}")
-#             # Stop this run so spinner finishes and we don’t get half-rendered UI
-#             st.stop()
-
-#         with map_container:
-#             st_folium(folium_map, width=None, height=650)
-
-# elif "map_file_bytes" in st.session_state:
-# #     pass
-#     # if user already generated a map earlier in the session, keep showing it
-#     # from folium import Map
-#     # from branca.element import Figure
-
-#     # rebuild folium Map from stored HTML
-#     # easiest is to re-run generate_folium_map if you want "remembered" values,
-#     # but to keep it simple we'll only display after generate until page reload
-#     folium_map, _ = generate_folium_map(
-#         geography=geography,
-#         boundary=boundary,
-#         metric=metric,
-#         month_year=month_year,
-#         annotations=annotations,
-#         state=state,
-#     )
-#     with map_container:
-#         st_folium(folium_map, width=None, height=650)
 
