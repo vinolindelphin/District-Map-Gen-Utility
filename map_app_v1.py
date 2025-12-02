@@ -1060,7 +1060,7 @@ def main():
                 )
 
                 # Convert folium map to HTML
-                map_html = folium_map._repr_html_()
+                # map_html = folium_map._repr_html_()
 
                 # Optional: wrap in basic HTML shell for download
                 full_html = f"""
@@ -1077,10 +1077,10 @@ def main():
                 """.encode("utf-8")
 
                 # Store in session
-                st.session_state.last_map_html = map_html
+                # st.session_state.last_map_html = map_html
                 st.session_state.last_map_file_name = file_name or \
                     f"MAP_{geography}_{boundary}_{metric}_{month_value}.html"
-                # st.session_state.map_file_bytes = full_html
+                st.session_state.map_file_bytes = full_html
                 st.session_state.pending_changes = False
 
             except Exception as e:
