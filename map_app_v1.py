@@ -1080,7 +1080,7 @@ def main():
                 st.session_state.last_map_html = map_html
                 st.session_state.last_map_file_name = file_name or \
                     f"MAP_{geography}_{boundary}_{metric}_{month_value}.html"
-                st.session_state.map_file_bytes = full_html
+                # st.session_state.map_file_bytes = full_html
                 st.session_state.pending_changes = False
 
             except Exception as e:
