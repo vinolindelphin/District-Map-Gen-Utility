@@ -1125,8 +1125,13 @@ if generate_clicked:
 # --- 2. display the last generated map (no extra processing) ---
 
 if "map_html" in st.session_state:
-    st.components.v1.html(
-        st.session_state["map_html"],
-        height=650,
-        width=None,
-    )
+        folium_map, _ = generate_folium_map(
+        geography=geography,
+        boundary=boundary,
+        metric=metric,
+        month_year=month_year,
+        annotations=annotations,
+        state=state,
+            )
+    with map_container:
+        st_folium(folium_map, width=None, height=650)
