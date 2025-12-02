@@ -1093,6 +1093,7 @@ if generate_clicked:
             map_html = folium_map.get_root().render()
             st.session_state["map_file_bytes"] = map_html.encode("utf-8")
             st.session_state["map_file_name"] = file_name
+            st.session_state["map_html"] = map_html
         except Exception as e:
             st.error(f"❌ Error while generating map: {e}")
             # Stop this run so spinner finishes and we don’t get half-rendered UI
@@ -1101,22 +1102,31 @@ if generate_clicked:
         with map_container:
             st_folium(folium_map, width=None, height=650)
 
-elif "map_file_bytes" in st.session_state:
-#     pass
-    # if user already generated a map earlier in the session, keep showing it
-    # from folium import Map
-    # from branca.element import Figure
+# elif "map_file_bytes" in st.session_state:
+# #     pass
+#     # if user already generated a map earlier in the session, keep showing it
+#     # from folium import Map
+#     # from branca.element import Figure
 
-    # rebuild folium Map from stored HTML
-    # easiest is to re-run generate_folium_map if you want "remembered" values,
-    # but to keep it simple we'll only display after generate until page reload
-    folium_map, _ = generate_folium_map(
-        geography=geography,
-        boundary=boundary,
-        metric=metric,
-        month_year=month_year,
-        annotations=annotations,
-        state=state,
+#     # rebuild folium Map from stored HTML
+#     # easiest is to re-run generate_folium_map if you want "remembered" values,
+#     # but to keep it simple we'll only display after generate until page reload
+#     folium_map, _ = generate_folium_map(
+#         geography=geography,
+#         boundary=boundary,
+#         metric=metric,
+#         month_year=month_year,
+#         annotations=annotations,
+#         state=state,
+#     )
+#     with map_container:
+#         st_folium(folium_map, width=None, height=650)
+
+# --- 2. display the last generated map (no extra processing) ---
+
+if "map_html" in st.session_state:
+    st.components.v1.html(
+        st.session_state["map_html"],
+        height=650,
+        width=None,
     )
-    with map_container:
-        st_folium(folium_map, width=None, height=650)
