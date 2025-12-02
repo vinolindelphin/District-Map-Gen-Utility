@@ -1091,7 +1091,7 @@ def main():
     # ----------------- Show map (or instructions) -----------------
     if st.session_state.last_map_html:
         # IMPORTANT: this only re-renders saved HTML; no new BigQuery calls.
-        st_html(st.session_state.last_map_html, height=700, scrolling=False)
+        st_html(st.session_state.last_map_html, height=350, scrolling=False)
     else:
         st.info("Choose geography, boundary, metric, month and state, then click **Generate Map**.")
 
