@@ -912,8 +912,9 @@ def generate_folium_map(geography, boundary, metric, month_year, annotations, st
     # Convert to HTML string to show in Streamlit
     # map_html = folium_map._repr_html_()
     # return folium_map, file_name, map_html
-
-    return folium_map, file_name
+    html_str = folium_map.get_root().render()
+    return folium_map, file_name, html_str
+    # return folium_map, file_name
 
 
 
@@ -1080,7 +1081,7 @@ if generate_clicked:
     with st.spinner("Generating map… this may take a few seconds"):
         try:
         # IMPORTANT: this uses your existing function & logic
-            folium_map, file_name = generate_folium_map(
+            folium_map, file_name, map_html = generate_folium_map(
                 geography=geography,
                 boundary=boundary,
                 metric=metric,
@@ -1102,25 +1103,25 @@ if generate_clicked:
         with map_container:
             st_folium(folium_map, width=None, height=650)
 
-elif "map_file_bytes" in st.session_state:
-#     pass
-    # if user already generated a map earlier in the session, keep showing it
-    # from folium import Map
-    # from branca.element import Figure
+# elif "map_file_bytes" in st.session_state:
+# #     pass
+#     # if user already generated a map earlier in the session, keep showing it
+#     # from folium import Map
+#     # from branca.element import Figure
 
-    # rebuild folium Map from stored HTML
-    # easiest is to re-run generate_folium_map if you want "remembered" values,
-    # but to keep it simple we'll only display after generate until page reload
-    folium_map, _ = generate_folium_map(
-        geography=geography,
-        boundary=boundary,
-        metric=metric,
-        month_year=month_year,
-        annotations=annotations,
-        state=state,
-    )
-    with map_container:
-        st_folium(folium_map, width=None, height=650)
+#     # rebuild folium Map from stored HTML
+#     # easiest is to re-run generate_folium_map if you want "remembered" values,
+#     # but to keep it simple we'll only display after generate until page reload
+#     folium_map, _ = generate_folium_map(
+#         geography=geography,
+#         boundary=boundary,
+#         metric=metric,
+#         month_year=month_year,
+#         annotations=annotations,
+#         state=state,
+#     )
+#     with map_container:
+#         st_folium(folium_map, width=None, height=650)
 
 # --- 2. display the last generated map (no extra processing) ---
 
@@ -1135,3 +1136,11 @@ elif "map_file_bytes" in st.session_state:
 #         )
 #     with map_container:
 #         st_folium(folium_map, width=None, height=650)
+
+# --- 2. display the last generated map (no extra processing) ---
+if "map_html" in st.session_state:
+    st.components.v1.html(
+        st.session_state["map_html"],
+        height=650,
+        width=None,
+    )
