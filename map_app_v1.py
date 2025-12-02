@@ -95,14 +95,16 @@ def get_bq_client():
         if isinstance(sa_info, str):
             sa_info = json.loads(sa_info)  # if pasted as a raw JSON string
         creds = service_account.Credentials.from_service_account_info(sa_info)
-        return bigquery.Client(credentials=creds, project=creds.project_id), "secrets:gcp_service_account"
+        # return bigquery.Client(credentials=creds, project=creds.project_id), "secrets:gcp_service_account"
+        return bigquery.Client(credentials=creds, project=creds.project_id)
 
     # B) Directly read secrets.toml from disk (HOME and CWD)
     sa_info, src = _load_sa_from_toml_files()
     if sa_info:
         # keys in TOML table are already parsed as a dict
         creds = service_account.Credentials.from_service_account_info(sa_info)
-        return bigquery.Client(credentials=creds, project=creds.project_id), src
+        # return bigquery.Client(credentials=creds, project=creds.project_id), src
+        return bigquery.Client(credentials=creds, project=creds.project_id)
 
     # # C) Env var (local dev)
     # gac = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
