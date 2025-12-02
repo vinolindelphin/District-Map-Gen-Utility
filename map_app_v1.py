@@ -1124,7 +1124,7 @@ if generate_clicked:
 
 # --- 2. display the last generated map (no extra processing) ---
 
-if "map_html" in st.session_state and not clicked:
+if "map_html" in st.session_state and not generate_clicked:
     folium_map, _ = generate_folium_map(
     geography=geography,
     boundary=boundary,
