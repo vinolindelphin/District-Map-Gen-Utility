@@ -1,0 +1,4 @@
+streamlit
+pandas
+numpy
+# add anything else you imported
