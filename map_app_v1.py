@@ -1060,7 +1060,7 @@ def main():
                 )
 
                 # Convert folium map to HTML
-                # map_html = folium_map._repr_html_()
+                map_html = folium_map._repr_html_()
 
                 # Optional: wrap in basic HTML shell for download
                 full_html = f"""
@@ -1077,7 +1077,7 @@ def main():
                 """.encode("utf-8")
 
                 # Store in session
-                # st.session_state.last_map_html = map_html
+                st.session_state.last_map_html = map_html
                 st.session_state.last_map_file_name = file_name or \
                     f"MAP_{geography}_{boundary}_{metric}_{month_value}.html"
                 st.session_state.map_file_bytes = full_html
@@ -1091,7 +1091,7 @@ def main():
     # ----------------- Show map (or instructions) -----------------
     if st.session_state.last_map_html:
         # IMPORTANT: this only re-renders saved HTML; no new BigQuery calls.
-        st_html(st.session_state.last_map_html, height=700, scrolling=False)
+        st_html(st.session_state.last_map_html, height=700, scrolling=True)
     else:
         st.info("Choose geography, boundary, metric, month and state, then click **Generate Map**.")
 
